@@ -37,7 +37,7 @@ void execute(char **cmd){
 			printf("\"%s\" command not found! \n",cmd);
 	}
 	else
-		wait();
+		wait(NULL);
 }
 
 int main(int argc, char *argv[])
