@@ -1,57 +1,61 @@
-#include<stdio.h>
-#include<sys/types.h>
-#include<sys/wait.h>
-#include<stdlib.h>
-#include<fcntl.h>
-#include<unistd.h>
-#include<signal.h>
-#include<string.h>
+#include   <sys/types.h>
+#include   <sys/wait.h>
+#include   <unistd.h>
+#include   <stdio.h>
+#include   <stdlib.h>
+#include   <string.h>
 
-#define STR_LEN 100
-
-char **splitSpace(char str[]){
-	char** split = (char **) malloc(20 * sizeof(char *));
-	// Returns first token 
-    	char *token = strtok(str, " ");
-   	int i=0;
-    	// delimiters present in str[].
-    	while (token != NULL)
-    	{	
-		split[i] = token;
-		
-       		//printf("%s1", split[i]);
-        	token = strtok(NULL, " ");
-		i++;
-    	}
-	split[i++] = NULL;
-	return split;
-}
-void execute(char **cmd){
-	pid_t pid = fork();
-	if(!pid) {
-		if( execvp(cmd[0],cmd) >0){
-			execvp(cmd[0],cmd);
-			exit(0);
-		}
-		else
-			printf("\"%s\" command not found! \n",cmd);
-	}
-	else
-		wait(NULL);
+void  parse(char *line, char **argv)
+{
+     while (*line != '\0') {       /* if not the end of line ....... */ 
+          while (*line == ' ' || *line == '\t' || *line == '\n')
+               *line++ = '\0';     /* replace white spaces with 0    */
+          *argv++ = line;          /* save the argument position     */
+          while (*line != '\0' && *line != ' ' && 
+                 *line != '\t' && *line != '\n') 
+               line++;             /* skip the argument until ...    */
+     }
+     *argv = '\0';                 /* mark the end of argument list  */
 }
 
-int main(int argc, char *argv[])
-{	
-	char str[STR_LEN];
-	char **cmd;
-	while(1){
+void  execute(char **argv)
+{
+     pid_t  pid;
+     int    status;
 
-		printf("prompt > ");
-		gets(str);
-		cmd = splitSpace(str);
-		if(!strcmp(cmd[0],"exit"))
-			break;
-		execute(cmd);
-		
-	}
+     if ((pid = fork()) < 0) {     /* fork a child process           */
+          printf("*** ERROR: forking child process failed\n");
+          exit(1);
+     }
+     else if (pid == 0) {          /* for the child process:         */
+          if (execvp(*argv, argv) < 0) {     /* execute the command  */
+               printf("%s: command not found\n", argv[0]);
+               exit(1);
+          }
+     }
+     else {                                  /* for the parent:      */
+          while (wait(&status) != pid)       /* wait for completion  */
+               ;
+     }
+}
+
+void  main(void)
+{
+     char  line[1024];             /* the input line                 */
+     char  *argv[64];              /* the command line argument      */
+
+     while (1) {                   /* repeat until done ....         */
+          printf("shell -> ");     /*   display a prompt             */
+
+	  scanf("%[^\n]",line);
+	  getchar();
+
+          //gets(line);              /*   read in the command line     */
+
+
+          parse(line, argv);       /*   parse the line               */
+          if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?     */
+               exit(0);            /*   exit if it is                */
+          execute(argv);           /* otherwise, execute the command */
+     }
 }
