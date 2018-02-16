@@ -34,7 +34,7 @@ int  execute(char **argv){
 
         // Error occurred
         char* error = strerror(errno);
-        printf("\033[1;31merror:\033[0;m %s: %s\n", argv[0], error);
+        printf("\033[1;31merror:\033[1;94m %s \033[0;m: %s\n", argv[0], error);
         return 0;
     }
 
@@ -47,19 +47,34 @@ int  execute(char **argv){
     }
 }
 
+void removeSpaces(char *str){
+    int count = 0;		    /* To keep track of non-space character count */
+    for (int i = 0; str[i]; i++)    /* Traverse the given string. */
+	if (str[i] == ' ' && 	    /* skip spaces*/
+           (str[i-1] == ' ' || str[i-1] == '\0'));      
+        else str[count++] = str[i]; /* If current character is not space, */
+				    /* then place it at index 'count++' */
+    str[count] = '\0';
+}
+
 char **splitCommand(char *line){
      char** split = (char **) malloc(80*sizeof(char *));
      char *token = strtok(line, ";");
      int i=0;
 
      while (token != NULL){
-	 if (strcmp(token, "quit") == 0)  /* is it an "quit"?     */
-	           exit(0);            /*   exit if it is               */
-         split[i] = token;
+	 removeSpaces(token);             /* remove spaces from the token*/
+	 if (strcmp(token, "quit") == 0)  /* is it an "quit"?  */
+	     exit(0);                     /* exit if it is     */
+	 
+	 if(token != '\0') 
+	     //printf("%s\n", token);        
+	     split[i] = token;
          token = strtok(NULL, ";");
 	 i++;
      }
      split[i] = NULL;
+
      return split;
 }
 
