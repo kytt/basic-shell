@@ -63,7 +63,10 @@ void removeSpaces(char *str){
            (str[i-1] == ' ' || str[i-1] == '\0'));      
         else str[count++] = str[i]; /* If current character is not space, */
 				    /* then place it at index 'count++' */
+    if(str[count-1] != ' ') 	    /* check if there is any ' ' behind string */
     str[count] = '\0';
+    else
+    str[count-1] ='\0';
 }
 
 char **splitCommand(char *line){
