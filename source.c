@@ -19,6 +19,8 @@ void  parse(char *line, char **argv){
 int  execute(char **argv){
     if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?  */
      	exit(0);                      /* exit if it is     */ 
+    else if(strlen(argv[0]) == 0)     /* if argv[0] has no command quit this function */
+	return 0;
     else{
     // Fork process
 	    pid_t pid = fork();
