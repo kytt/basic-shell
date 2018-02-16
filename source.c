@@ -4,46 +4,57 @@
 #include   <stdio.h>
 #include   <stdlib.h>
 #include   <string.h>
+#include   <errno.h>
 
-void  parse(char *line, char **argv)
-{
-     while (*line != '\0') {       /* if not the end of line ....... */ 
-          while (*line == ' ' || *line == '\t' || *line == '\n')
-               *line++ = '\0';     /* replace white spaces with 0    */
-          *argv++ = line;          /* save the argument position     */
-          while (*line != '\0' && *line != ' ' && 
-                 *line != '\t' && *line != '\n') 
-               line++;             /* skip the argument until ...    */
-     }
-     *argv = '\0';                 /* mark the end of argument list  */
+#define MAX_COMMAND_LENGTH 100
+#define MAX_NUMBER_OF_PARAMS 10
+
+void  parse(char *line, char **argv){
+    for(int i = 0; i < MAX_NUMBER_OF_PARAMS; i++) {
+        argv[i] = strsep(&line, " ");
+        if(argv[i] == NULL) break;
+    }
 }
 
-void  execute(char **argv)
-{
-     pid_t  pid;
-     int    status;
+int  execute(char **argv){
+    // Fork process
+    pid_t pid = fork();
 
-     if ((pid = fork()) < 0) {     /* fork a child process           */
-          printf("*** ERROR: forking child process failed\n");
-          exit(1);
-     }
-     else if (pid == 0) {          /* for the child process:         */
-          if (execvp(*argv, argv) < 0) {     /* execute the command  */
-               printf("%s: command not found\n", argv[0]);
-               exit(1);
-          }
-     }
-     else {                                  /* for the parent:      */
-          while (wait(&status) != pid)       /* wait for completion  */
-               ;
-     }
+    // Error
+    if (pid == -1) {
+        char* error = strerror(errno);
+        printf("fork: %s\n", error);
+        return 1;
+    }
+
+    // Child process
+    else if (pid == 0) {
+        // Execute command
+        execvp(argv[0], argv);  
+
+        // Error occurred
+        char* error = strerror(errno);
+        printf("\033[1;31merror:\033[0;m %s: %s\n", argv[0], error);
+        return 0;
+    }
+
+    // Parent process
+    else {
+        // Wait for child process to finish
+        int childStatus;
+        waitpid(pid, &childStatus, 0);
+        return 1;
+    }
 }
 
 char **splitCommand(char *line){
-     char** split = (char **) malloc(20*sizeof(char *));
+     char** split = (char **) malloc(80*sizeof(char *));
      char *token = strtok(line, ";");
      int i=0;
-     while (token != NULL){	
+
+     while (token != NULL){
+	 if (strcmp(token, "quit") == 0)  /* is it an "quit"?     */
+	           exit(0);            /*   exit if it is               */
          split[i] = token;
          token = strtok(NULL, ";");
 	 i++;
@@ -54,24 +65,27 @@ char **splitCommand(char *line){
 
 void  main(void)
 {
-     char  line[1024];             /* the input line                 */
-     char  *argv[64];              /* the command line argument      */
+     char  line[MAX_COMMAND_LENGTH + 1];     /* the input line                 */
+     char  *argv[MAX_NUMBER_OF_PARAMS + 1];  /* the command line argument      */
      char** split = (char **) malloc(20*sizeof(char *));
-
-     while (1) {                   /* repeat until done ....         */
-          printf("\033[32;1mshell -> ");     /*   display a prompt             */
+     int cmdCount = 0;
+     
+     while (1) {                             /* repeat until done ....         */
+          printf("\033[1;93mshell -> ");     /*   display a prompt             */
 	  printf("\033[0;m");
-	  scanf("%[^\n]",line);
-	  getchar();
-          //gets(line);              /*   read in the command line     */
+	  
+	  /* read command from standard input, exit on Ctrl+D */
+          if(fgets(line, sizeof(line), stdin) == NULL) break;
+
+          if(line[strlen(line)-1] == '\n') { /* remove trailing newline character */ 
+              line[strlen(line)-1] = '\0'; 
+          } 
 
 	  split = splitCommand(line);
-
           int i = 0;
+
 	  while(split[i] != NULL){
-	      parse(split[i], argv);       /*   parse the line               */
-	      if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?     */
-	           exit(0);            /*   exit if it is                */
+              parse(split[i], argv);    /*   parse the line */
 	      execute(argv);           /* otherwise, execute the command */
               i++;
 	  }
