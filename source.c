@@ -61,15 +61,11 @@ char **splitCommand(char *line){
      char** split = (char **) malloc(80*sizeof(char *));
      char *token = strtok(line, ";");
      int i=0;
-
      while (token != NULL){
 	 removeSpaces(token);             /* remove spaces from the token*/
 	 if (strcmp(token, "quit") == 0)  /* is it an "quit"?  */
-	     exit(0);                     /* exit if it is     */
-	 
-	 if(token != '\0') 
-	     //printf("%s\n", token);        
-	     split[i] = token;
+	     exit(0);                     /* exit if it is     */      
+	 split[i] = token;
          token = strtok(NULL, ";");
 	 i++;
      }
