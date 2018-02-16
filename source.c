@@ -39,23 +39,41 @@ void  execute(char **argv)
      }
 }
 
+char **splitCommand(char *line){
+     char** split = (char **) malloc(20*sizeof(char *));
+     char *token = strtok(line, ";");
+     int i=0;
+     while (token != NULL){	
+         split[i] = token;
+         token = strtok(NULL, ";");
+	 i++;
+     }
+     split[i] = NULL;
+     return split;
+}
+
 void  main(void)
 {
      char  line[1024];             /* the input line                 */
      char  *argv[64];              /* the command line argument      */
+     char** split = (char **) malloc(20*sizeof(char *));
 
      while (1) {                   /* repeat until done ....         */
-          printf("shell -> ");     /*   display a prompt             */
-
+          printf("\033[32;1mshell -> ");     /*   display a prompt             */
+	  printf("\033[0;m");
 	  scanf("%[^\n]",line);
 	  getchar();
-
           //gets(line);              /*   read in the command line     */
 
+	  split = splitCommand(line);
 
-          parse(line, argv);       /*   parse the line               */
-          if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?     */
-               exit(0);            /*   exit if it is                */
-          execute(argv);           /* otherwise, execute the command */
+          int i = 0;
+	  while(split[i] != NULL){
+	      parse(split[i], argv);       /*   parse the line               */
+	      if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?     */
+	           exit(0);            /*   exit if it is                */
+	      execute(argv);           /* otherwise, execute the command */
+              i++;
+	  }
      }
 }
