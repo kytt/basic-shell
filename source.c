@@ -17,38 +17,43 @@ void  parse(char *line, char **argv){
 }
 
 int  execute(char **argv){
+    if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?  */
+     	exit(0);                      /* exit if it is     */ 
+    else{
     // Fork process
-    pid_t pid = fork();
+	    pid_t pid = fork();
 
-    // Error
-    if (pid == -1) {
-        char* error = strerror(errno);
-        printf("fork: %s\n", error);
-        return 1;
-    }
+	    // Error
+	    if (pid == -1) {  
 
-    // Child process
-    else if (pid == 0) {
+		char* error = strerror(errno);
+		printf("fork: %s\n", error);
+		return 1;
+	    }
 
-	if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?  */
-	     exit(0);                      /* exit if it is     */   
+	    // Child process
+	    else if (pid == 0) {
 
-        // Execute command
-        execvp(argv[0], argv);  
 
-        // Error occurred
-        char* error = strerror(errno);
-        printf("\033[1;31merror:\033[1;94m %s \033[0;m: %s\n", argv[0], error);
-        return 0;
-    }
+		// Execute command
+		execvp(argv[0], argv);  
 
-    // Parent process
-    else {
-        // Wait for child process to finish
-        int childStatus;
-        waitpid(pid, &childStatus, 0);
-        return 1;
-    }
+		// Error occurred
+		char* error = strerror(errno);
+		printf("\033[1;31merror:\033[1;94m %s \033[0;m: %s\n", argv[0], error);
+		exit(0);
+		return 0;
+	    }
+
+	    // Parent process
+	    else {
+		// Wait for child process to finish
+		int childStatus;
+
+		waitpid(pid, &childStatus, 0);
+		return 1;
+	    }
+       }
 }
 
 void removeSpaces(char *str){
