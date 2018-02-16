@@ -29,6 +29,10 @@ int  execute(char **argv){
 
     // Child process
     else if (pid == 0) {
+
+	if (strcmp(argv[0], "quit") == 0)  /* is it an "quit"?  */
+	     exit(0);                      /* exit if it is     */   
+
         // Execute command
         execvp(argv[0], argv);  
 
@@ -62,9 +66,7 @@ char **splitCommand(char *line){
      char *token = strtok(line, ";");
      int i=0;
      while (token != NULL){
-	 removeSpaces(token);             /* remove spaces from the token*/
-	 if (strcmp(token, "quit") == 0)  /* is it an "quit"?  */
-	     exit(0);                     /* exit if it is     */      
+	 removeSpaces(token);             /* remove spaces from the token*/   
 	 split[i] = token;
          token = strtok(NULL, ";");
 	 i++;
@@ -74,14 +76,40 @@ char **splitCommand(char *line){
      return split;
 }
 
-void  main(void)
+void  main(int argc, char **argval)
 {
+     
      char  line[MAX_COMMAND_LENGTH + 1];     /* the input line                 */
      char  *argv[MAX_NUMBER_OF_PARAMS + 1];  /* the command line argument      */
-     char** split = (char **) malloc(20*sizeof(char *));
-     int cmdCount = 0;
-     
-     while (1) {                             /* repeat until done ....         */
+     char **split = (char **) malloc(20*sizeof(char *));
+
+     FILE *file = fopen(argval[1], "r");
+     int k = 0;
+     if(argc > 1){
+         if (file == 0)
+             printf("Could not open file\n");
+         else {
+             char ch;
+             char *str = (char *)malloc(20*sizeof(char*));
+             int i = 0; 
+             while  ((ch = fgetc(file)) != EOF ){
+                 if (ch != '\n'){
+                     str[i++] = ch;
+		     //puts(str);
+		 }	
+		 else{
+		     str[i] = '\0';
+                     parse(str, argv);        /* parse the line */
+                     execute(argv);            /* otherwise, execute the command */
+                     memset(str,0,20*sizeof(char*));
+		     i = 0;
+		 }
+	     }
+	     fclose(file);
+         }
+     }
+ 
+     while (argc == 1) {                     /* repeat until done ....         */
           printf("\033[1;93mshell -> ");     /*   display a prompt             */
 	  printf("\033[0;m");
 	  
@@ -97,7 +125,7 @@ void  main(void)
 
 	  while(split[i] != NULL){
               parse(split[i], argv);    /*   parse the line */
-	      execute(argv);           /* otherwise, execute the command */
+	      execute(argv);            /* otherwise, execute the command */
               i++;
 	  }
      }
