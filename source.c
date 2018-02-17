@@ -88,9 +88,15 @@ void  main(int argc, char **argval){
                  if (ch != '\n')
                      str[i++] = ch;	
 		 else{
-		     str[i] = '\0';
-                     parse(str, argv);        /* parse the line */
-                     execute(argv);           /* otherwise, execute the command */
+		     if(str[strlen(str)-1] == '\n')     
+             	         str[strlen(str)-1] = '\0'; 
+	             split = splitCommand(str);
+                     int k = 0;
+	             while(split[k] != NULL){
+                         parse(split[k], argv); /* parse the line */         
+	                 execute(argv);         /* otherwise, execute the command */
+		         k++;
+	             }         
                      memset(str,0,20*sizeof(char*));
 		     i = 0;
 		 }
